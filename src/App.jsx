@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 export default function Forex() {
     const [base, setBase] = useState("USD");
     const [baseAmt, setBaseAmt] = useState(1);
-    const currencyTypes = ["USD", "GBP", "EUR", "JPY"];
+    const currencyTypes = ['KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP'];
     const [currencyVals, setCurrencyVals] = useState(
         currencyTypes.map(() => "...")
     );
