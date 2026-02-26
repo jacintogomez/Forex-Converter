@@ -29,6 +29,7 @@ export default function Forex() {
         setDraftAmt(String(parsed));
         setDraftFlag(newFlag);
         setIsModalOpen(true);
+        console.log(currencyVals);
     }
 
     function closeModal() {
@@ -59,7 +60,7 @@ export default function Forex() {
             const cryptoRates = {};
             for (const [id, values] of Object.entries(data_crypto)) {
                 const ticker = cryptoTickers[id];
-                cryptoRates[ticker] = values['usd'];
+                cryptoRates[ticker] = 1/values['usd'];
             }
 
             setRates({...data_fiat.rates,...cryptoRates,'USD':1.0000});
