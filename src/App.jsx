@@ -4,8 +4,10 @@ export default function Forex() {
     const [base, setBase] = useState("USD");
     const [baseAmt, setBaseAmt] = useState(1);
     const [baseFlag, setBaseFlag] = useState('🇺🇸');
-    const currencyTypes = ['KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP'];
-    const countryFlags = ['🇰🇷','🇯🇵','🇹🇭','🇭🇰','🇨🇳','🇲🇾','🇸🇬','🇺🇸','🇪🇺','🇬🇧'];
+    const currencyTypes = ['KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP','ETH','BTC'];
+    const countryFlags = ['🇰🇷','🇯🇵','🇹🇭','🇭🇰','🇨🇳','🇲🇾','🇸🇬','🇺🇸','🇪🇺','🇬🇧','🔷','฿'];
+    const cryptoIds = ['ethereum','bitcoin'];
+    const cryptoTickers = {'ethereum':'ETH','bitcoin':'BTC'};
     const [rates, setRates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,7 +18,7 @@ export default function Forex() {
     const currencyVals = currencyTypes.map((quote) => {
         if(loading){return "...";}
         if(quote === base){return baseAmt.toFixed(4);}
-        if(!rates[quote] || !rates[base]){return "error";}
+        if(!rates[quote]||!rates[base]){return "error";}
         return (baseAmt * (rates[quote] / rates[base])).toFixed(4);
     });
 
@@ -47,11 +49,20 @@ export default function Forex() {
 
         async function fetchRates() {
             setLoading(true);
-            const url=`https://api.frankfurter.dev/v1/latest?base=USD&symbols=${currencyTypes.join(",")}`;
-            const response=await fetch(url);
-            const data=await response.json();
-            data.rates['USD']=1.0000;
-            setRates(data.rates);
+            const url_fiat=`https://api.frankfurter.dev/v1/latest?base=USD&symbols=${currencyTypes.join(",")}`;
+            const response_fiat=await fetch(url_fiat);
+            const data_fiat=await response_fiat.json();
+
+            const url_crypto=`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds.join(",")}&vs_currencies=${base}`;
+            const response_crypto=await fetch(url_crypto);
+            const data_crypto=await response_crypto.json();
+            const cryptoRates = {};
+            for (const [id, values] of Object.entries(data_crypto)) {
+                const ticker = cryptoTickers[id];
+                cryptoRates[ticker] = values['usd'];
+            }
+
+            setRates({...data_fiat.rates,...cryptoRates,'USD':1.0000});
             if (!cancelled) {
                 setLoading(false);
             }
