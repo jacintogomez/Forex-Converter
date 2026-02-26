@@ -6,14 +6,19 @@ export default function Forex() {
     const [baseFlag, setBaseFlag] = useState('🇺🇸');
     const currencyTypes = ['KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP'];
     const countryFlags = ['🇰🇷','🇯🇵','🇹🇭','🇭🇰','🇨🇳','🇲🇾','🇸🇬','🇺🇸','🇪🇺','🇬🇧'];
-    const [currencyVals, setCurrencyVals] = useState(
-        currencyTypes.map(() => "...")
-    );
+    const [rates, setRates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [draftBase, setDraftBase] = useState(base);
     const [draftAmt, setDraftAmt] = useState(String(baseAmt));
     const [draftFlag, setDraftFlag] = useState(String(baseFlag));
+
+    const currencyVals = currencyTypes.map((quote) => {
+        if(loading){return "...";}
+        if(quote === base){return baseAmt.toFixed(4);}
+        if(!rates[quote] || !rates[base]){return "error";}
+        return (baseAmt * (rates[quote] / rates[base])).toFixed(4);
+    });
 
     function openModal(newBase, newFlag, curAmt) {
         const parsed = Number(curAmt);
@@ -38,45 +43,24 @@ export default function Forex() {
     }
 
     useEffect(() => {
-        let cancelled = false;
+        let cancelled=false;
 
-        async function fetchAllRates() {
+        async function fetchRates() {
             setLoading(true);
-
-            const updatedVals = [...currencyVals];
-
-            const quotesToFetch = currencyTypes.filter((q) => q !== base);
-            let data = null;
-
-            if (quotesToFetch.length > 0) {
-                const symbols = quotesToFetch.join(",");
-                const url = `https://api.frankfurter.dev/v1/latest?base=${base}&symbols=${symbols}`;
-                const response = await fetch(url);
-                if (response.ok) {
-                    data = await response.json();
-                }
-            }
-
-            currencyTypes.forEach((quote, index) => {
-                if (quote === base) {
-                    updatedVals[index] = baseAmt.toFixed(4);
-                } else if (data?.rates?.[quote] != null) {
-                    updatedVals[index] = (baseAmt * (1 * data.rates[quote])).toFixed(4);
-                } else {
-                    updatedVals[index] = "error";
-                }
-            });
+            const url=`https://api.frankfurter.dev/v1/latest?base=USD&symbols=${currencyTypes.join(",")}`;
+            const response=await fetch(url);
+            const data=await response.json();
+            data.rates['USD']=1.0000;
+            setRates(data.rates);
             if (!cancelled) {
-                setCurrencyVals(updatedVals);
                 setLoading(false);
             }
         }
-
-        fetchAllRates();
+        fetchRates();
         return () => {
             cancelled = true;
         };
-    }, [base, baseAmt]);
+    },[]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
