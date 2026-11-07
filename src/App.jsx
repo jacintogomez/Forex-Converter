@@ -24,9 +24,10 @@ export default function Forex() {
 
     function openModal(newBase, newFlag, curAmt) {
         const parsed = Number(curAmt);
-        if (!Number.isFinite(parsed) || parsed <= 0) return;
+        // Very small values display as 0.0000 after rounding; still allow editing them.
+        const startAmt = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
         setDraftBase(newBase);
-        setDraftAmt(String(parsed));
+        setDraftAmt(String(startAmt));
         setDraftFlag(newFlag);
         setIsModalOpen(true);
         console.log(currencyVals);
