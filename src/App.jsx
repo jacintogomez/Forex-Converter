@@ -4,8 +4,8 @@ export default function Forex() {
     const [base, setBase] = useState("USD");
     const [baseAmt, setBaseAmt] = useState(1);
     const [baseFlag, setBaseFlag] = useState('🇺🇸');
-    const currencyTypes = ['KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP','ETH','BTC'];
-    const countryFlags = ['🇰🇷','🇯🇵','🇹🇭','🇭🇰','🇨🇳','🇲🇾','🇸🇬','🇺🇸','🇪🇺','🇬🇧','🔷','฿'];
+    const currencyTypes = ['VND','KRW','JPY','THB','HKD','CNY','MYR','SGD','USD','EUR','GBP','ETH','BTC'];
+    const countryFlags = ['🇻🇳','🇰🇷','🇯🇵','🇹🇭','🇭🇰','🇨🇳','🇲🇾','🇸🇬','🇺🇸','🇪🇺','🇬🇧','🔷','฿'];
     const cryptoIds = ['ethereum','bitcoin'];
     const cryptoTickers = {'ethereum':'ETH','bitcoin':'BTC'};
     const [rates, setRates] = useState([]);
@@ -54,7 +54,9 @@ export default function Forex() {
             const response_fiat=await fetch(url_fiat);
             const data_fiat=await response_fiat.json();
 
-            const url_crypto=`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds.join(",")}&vs_currencies=${base}`;
+            // Frankfurter (ECB data) doesn't publish VND, so we also request VND prices
+            // from CoinGecko and derive USD->VND from the BTC price in both currencies.
+            const url_crypto=`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoIds.join(",")}&vs_currencies=usd,vnd`;
             const response_crypto=await fetch(url_crypto);
             const data_crypto=await response_crypto.json();
             const cryptoRates = {};
@@ -62,8 +64,13 @@ export default function Forex() {
                 const ticker = cryptoTickers[id];
                 cryptoRates[ticker] = 1/values['usd'];
             }
+            const btc = data_crypto['bitcoin'];
+            const derivedFiat = {};
+            if (btc && btc['usd'] && btc['vnd']) {
+                derivedFiat['VND'] = btc['vnd'] / btc['usd'];
+            }
 
-            setRates({...data_fiat.rates,...cryptoRates,'USD':1.0000});
+            setRates({...data_fiat.rates,...derivedFiat,...cryptoRates,'USD':1.0000});
             if (!cancelled) {
                 setLoading(false);
             }
